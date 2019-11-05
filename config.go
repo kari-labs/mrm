@@ -1,5 +1,11 @@
 package main
 
+import (
+	"encoding/json"
+	"io/ioutil"
+	"os"
+)
+
 type repo struct {
 	URL       string  `json:"url"`
 	Directory string  `json:"dir"`
@@ -7,13 +13,61 @@ type repo struct {
 }
 
 type config struct {
-	Repos repo `json:"repos"`
+	file  *os.File `json:"-"`
+	Repos []repo   `json:"repos"`
 }
 
-func addRepoToConfig(repo repo) {
+var globalConfig config
 
+func (cfg *config) addRepo(repo repo) error {
+	cfg.Repos = append(cfg.Repos, repo)
+	err := cfg.save()
+	return err
 }
 
-func saveConfig(config *config) {
+func (cfg *config) close() {
+	cfg.file.Close()
+}
 
+func (cfg *config) save() error {
+	jsonData, err := json.MarshalIndent(cfg, "", "    ")
+	if err != nil {
+		return err
+	}
+
+	err = cfg.file.Truncate(0)
+	if err != nil {
+		return err
+	}
+	cfg.file.Seek(0, 0)
+
+	_, err = cfg.file.Write(jsonData)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func loadConfig(configPath string) (*config, error) {
+	cfgFile, err := os.OpenFile(configPath, os.O_CREATE, 0666)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := ioutil.ReadAll(cfgFile)
+	if err != nil {
+		return nil, err
+	}
+
+	var cfg config
+	if len(data) != 0 {
+		err = json.Unmarshal(data, &cfg)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	cfg.file = cfgFile
+
+	return &cfg, nil
 }

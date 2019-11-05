@@ -9,7 +9,7 @@ import (
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "mUltI rEpO ManaGER"
+	app.Name = "Multi Repo Manager"
 	app.Usage = "manage repos"
 
 	app.Commands = []cli.Command{
@@ -26,6 +26,12 @@ func main() {
 			},
 		},
 		{
+			Name:    "clone",
+			Aliases: []string{"c"},
+			Usage:   "clone all repos from the config",
+			Action:  cloneCommand,
+		},
+		{
 			Name:    "remove",
 			Aliases: []string{"r"},
 			Usage:   "remove a repo from the config and delete it",
@@ -40,6 +46,14 @@ func main() {
 					Usage: "Force delete repo regardless of unpushed or uncommited changes",
 				},
 			},
+		},
+	}
+
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "config, c",
+			Usage: "Specifies the config file to use",
+			Value: "mrm.conf",
 		},
 	}
 

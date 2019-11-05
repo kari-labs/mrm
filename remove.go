@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"strings"
@@ -24,50 +25,47 @@ func removeRepo(c *cli.Context) error {
 			rmerr := os.RemoveAll(folderName)
 
 			if rmerr != nil {
-				return fmt.Errorf("Could not remove %v: %v", folderName, rmerr)
+				return fmt.Errorf("Could not delete %v: %v", folderName, rmerr)
 			}
 		} else {
 			repo, err := git.PlainOpen(folderName)
 			if err != nil {
 				return err
 			}
-			w, _ := repo.Worktree()
-			status, _ := w.Status()
-			if !status.IsClean() {
-				return fmt.Errorf("Work tree is not clean")
+
+			w, wtErr := repo.Worktree()
+			if wtErr != nil {
+				return wtErr
 			}
 
-			// // Check for uncommited changes
-			// statusCmd := exec.Command("git", "-C", folderName, "status", "--porcelain")
-			// output, err := statusCmd.CombinedOutput()
+			status, stErr := w.Status()
+			if stErr != nil {
+				return stErr
+			}
 
-			// if err != nil {
-			// 	return fmt.Errorf("Failed to check %v for unstaged changes, err: %v", folderName, err)
-			// }
+			if !status.IsClean() {
+				return fmt.Errorf("There are current unstaged changes on %v", folderName)
+			}
 
-			// if len(output) != 0 {
-			// 	return fmt.Errorf("Cannot remove %v: unstaged changes", folderName)
-			// }
+			fmt.Printf("MRM cannot automatically check the repo for unpushed changes or stashes, please verify that deleting this repo (%v) is the intended action or add --keep to remove the repo from the config but not delte the directory\n", folderName)
+			fmt.Println("Type \"yes\" to confirm deletion, or anything else to cancel")
 
-			// // Check for unapplied stashes
-			// stashCommand := exec.Command("git", "-C", folderName, "stash", "list")
-			// output, err = stashCommand.CombinedOutput()
+			s := bufio.NewReader(os.Stdin)
+			resp, err := s.ReadString('\n')
 
-			// if err != nil {
-			// 	return fmt.Errorf("Failed to check %v for stashes, err: %v", folderName, err)
-			// }
+			if err != nil {
+				return err
+			}
 
-			// if len(output) != 0 {
-			// 	return fmt.Errorf("Cannot remove %v: unapplied stashes", folderName)
-			// }
+			if strings.Trim(resp, "\r\n") != "yes" {
+				return fmt.Errorf("Action cancelled by user")
+			}
 
-			// // Check for unpushed commits
+			rmerr := os.RemoveAll(folderName)
 
-			// if err != nil {
-			// 	fmt.Printf("Output: %v\nError: %v", string(output), err)
-			// } else {
-			// 	fmt.Printf("No error, output: %v", output)
-			// }
+			if rmerr != nil {
+				return fmt.Errorf("Could not delete %v: %v", folderName, rmerr)
+			}
 		}
 	}
 
