@@ -1,4 +1,4 @@
-module gitlab.com/kari/mrm
+module github.com/kari-labs/mrm
 
 go 1.13
 
