@@ -11,12 +11,29 @@ import (
 )
 
 func removeRepo(c *cli.Context) error {
-	if !c.Bool("keep") {
-		if c.NArg() == 0 {
-			return fmt.Errorf("Please specify a repo to remove")
-		}
-		folderName := c.Args().First()
+	configPath := c.String("config")
+	if configPath == "" {
+		configPath = "mrm.conf"
+	}
 
+	config, err := loadConfig(configPath)
+	defer config.close()
+	if err != nil {
+		return fmt.Errorf("Failed to load config \"%v\", err: %v", configPath, err)
+	}
+
+	if c.NArg() == 0 {
+		return fmt.Errorf("Please specify a repo to remove")
+	}
+	folderName := c.Args().First()
+
+	err = config.removeRepo(folderName)
+	if err != nil {
+		return fmt.Errorf("Could not remove %v, err: %v", folderName, err)
+	}
+	fmt.Printf("Removed %v from config\n", folderName)
+
+	if !c.Bool("keep") {
 		if strings.ContainsAny(folderName, "\\/.") {
 			return fmt.Errorf("Repo name cannot contain . / or \\")
 		}
@@ -66,6 +83,8 @@ func removeRepo(c *cli.Context) error {
 			if rmerr != nil {
 				return fmt.Errorf("Could not delete %v: %v", folderName, rmerr)
 			}
+
+			fmt.Printf("Deleted %v\n", folderName)
 		}
 	}
 

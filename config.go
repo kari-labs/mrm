@@ -25,6 +25,16 @@ func (cfg *config) addRepo(repo repo) error {
 	return err
 }
 
+func (cfg *config) removeRepo(dirName string) error {
+	for i, repo := range cfg.Repos {
+		if repo.Directory == dirName {
+			cfg.Repos = append(cfg.Repos[:i], cfg.Repos[i+1:]...)
+		}
+	}
+	err := cfg.save()
+	return err
+}
+
 func (cfg *config) close() {
 	cfg.file.Close()
 }

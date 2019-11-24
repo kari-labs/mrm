@@ -30,7 +30,7 @@ func cloneCommand(c *cli.Context) error {
 		if err != nil {
 			os.RemoveAll(repo.Directory)
 			fmt.Printf("Failed to clone %v into %v\n", repo.URL, repo.Directory)
-			fmt.Println(err)
+			return err
 		}
 
 		fmt.Printf("Successfully cloned %v\n", repo.Directory)

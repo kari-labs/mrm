@@ -19,7 +19,7 @@ func getRepoName(url string) string {
 }
 
 func cloneRepo(repoURL, folderName string) error {
-	cloneCmd := exec.Command("git", "clone", repoURL, folderName)
+	cloneCmd := exec.Command("git", "clone", "--recursive", repoURL, folderName)
 	output, err := cloneCmd.CombinedOutput()
 
 	if err != nil {
